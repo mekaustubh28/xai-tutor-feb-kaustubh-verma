@@ -44,101 +44,82 @@ def row_to_email(r) -> dict:
 
 @router.get("")
 def list_emails(tab: Optional[str] = Query(None)):
-    try:
-        with get_db() as conn:
-            cursor = conn.cursor()
-            if tab == "unread":
-                cursor.execute("SELECT * FROM emails WHERE is_archived = 0 AND is_read = 0 ORDER BY created_at DESC")
-            elif tab == "archive":
-                cursor.execute("SELECT * FROM emails WHERE is_archived = 1 ORDER BY created_at DESC")
-            else:
-                cursor.execute("SELECT * FROM emails WHERE is_archived = 0 ORDER BY created_at DESC")
+    with get_db() as conn:
+        cursor = conn.cursor()
+        if tab == "unread":
+            cursor.execute("SELECT * FROM emails WHERE is_archived = 0 AND is_read = 0 ORDER BY created_at DESC")
+        elif tab == "archive":
+            cursor.execute("SELECT * FROM emails WHERE is_archived = 1 ORDER BY created_at DESC")
+        else:
+            cursor.execute("SELECT * FROM emails WHERE is_archived = 0 ORDER BY created_at DESC")
 
-            rows = cursor.fetchall()
-            return {"emails": [row_to_email(dict(r)) for r in rows]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        rows = cursor.fetchall()
+        return {"emails": [row_to_email(dict(r)) for r in rows]}
 
 
 @router.get("/{email_id}")
 def get_email(email_id: int):
-    try:
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            r = cursor.fetchone()
-            if r is None:
-                raise HTTPException(status_code=404, detail="Email not found")
-            return row_to_email(dict(r))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+        r = cursor.fetchone()
+        if r is None:
+            raise HTTPException(status_code=404, detail="Email not found")
+        return row_to_email(dict(r))
 
 
 @router.post("", status_code=201)
 def create_email(email: EmailCreate):
-    try:
-        preview = email.body[:100] + "..." if len(email.body) > 100 else email.body
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute(
-                """INSERT INTO emails (sender_name, sender_email, recipient_name, recipient_email,
-                   subject, body, preview, is_read, is_archived, attachment_name, attachment_size)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)""",
-                (
-                    email.sender_name,
-                    email.sender_email,
-                    email.recipient_name,
-                    email.recipient_email,
-                    email.subject,
-                    email.body,
-                    preview,
-                    email.attachment_name,
-                    email.attachment_size,
-                ),
-            )
-            email_id = cursor.lastrowid
-            cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            r = cursor.fetchone()
-            return row_to_email(dict(r))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    preview = email.body[:100] + "..." if len(email.body) > 100 else email.body
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """INSERT INTO emails (sender_name, sender_email, recipient_name, recipient_email,
+               subject, body, preview, is_read, is_archived, attachment_name, attachment_size)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 1, 0, ?, ?)""",
+            (
+                email.sender_name,
+                email.sender_email,
+                email.recipient_name,
+                email.recipient_email,
+                email.subject,
+                email.body,
+                preview,
+                email.attachment_name,
+                email.attachment_size,
+            ),
+        )
+        email_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+        r = cursor.fetchone()
+        return row_to_email(dict(r))
 
 
 @router.put("/{email_id}")
 def update_email(email_id: int, update: EmailUpdate):
-    try:
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            r = cursor.fetchone()
-            if r is None:
-                raise HTTPException(status_code=404, detail="Email not found")
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+        r = cursor.fetchone()
+        if r is None:
+            raise HTTPException(status_code=404, detail="Email not found")
 
-            if update.is_read is not None:
-                cursor.execute("UPDATE emails SET is_read = ? WHERE id = ?", (1 if update.is_read else 0, email_id))
-            if update.is_archived is not None:
-                cursor.execute("UPDATE emails SET is_archived = ? WHERE id = ?", (1 if update.is_archived else 0, email_id))
+        if update.is_read is not None:
+            cursor.execute("UPDATE emails SET is_read = ? WHERE id = ?", (1 if update.is_read else 0, email_id))
+        if update.is_archived is not None:
+            cursor.execute("UPDATE emails SET is_archived = ? WHERE id = ?", (1 if update.is_archived else 0, email_id))
 
-            cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            r = cursor.fetchone()
-            return row_to_email(dict(r))
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+        r = cursor.fetchone()
+        return row_to_email(dict(r))
 
 
 @router.delete("/{email_id}", status_code=204)
 def delete_email(email_id: int):
-    try:
-        with get_db() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT id FROM emails WHERE id = ?", (email_id,))
-            if cursor.fetchone() is None:
-                raise HTTPException(status_code=404, detail="Email not found")
-            cursor.execute("DELETE FROM emails WHERE id = ?", (email_id,))
-            return None
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    with get_db() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM emails WHERE id = ?", (email_id,))
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Email not found")
+        cursor.execute("DELETE FROM emails WHERE id = ?", (email_id,))
+        return None

@@ -98,41 +98,35 @@ export default function EmailClient() {
   }, []);
 
   const markAsRead = async (id: number) => {
-    try {
-      await fetch(`${API_URL}/emails/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_read: true }),
-      });
-      fetchEmails();
-      if (selectedEmail?.id === id) {
-        setSelectedEmail({ ...selectedEmail, is_read: true });
-      }
-    } catch {}
+    await fetch(`${API_URL}/emails/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_read: true }),
+    });
+    fetchEmails();
+    if (selectedEmail?.id === id) {
+      setSelectedEmail({ ...selectedEmail, is_read: true });
+    }
   };
 
   const archiveEmail = async (id: number) => {
-    try {
-      await fetch(`${API_URL}/emails/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_archived: true }),
-      });
-      fetchEmails();
-      if (selectedEmail?.id === id) {
-        setSelectedEmail(null);
-      }
-    } catch {}
+    await fetch(`${API_URL}/emails/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ is_archived: true }),
+    });
+    fetchEmails();
+    if (selectedEmail?.id === id) {
+      setSelectedEmail(null);
+    }
   };
 
   const deleteEmail = async (id: number) => {
-    try {
-      await fetch(`${API_URL}/emails/${id}`, { method: "DELETE" });
-      fetchEmails();
-      if (selectedEmail?.id === id) {
-        setSelectedEmail(emails.find((e) => e.id !== id) || null);
-      }
-    } catch {}
+    await fetch(`${API_URL}/emails/${id}`, { method: "DELETE" });
+    fetchEmails();
+    if (selectedEmail?.id === id) {
+      setSelectedEmail(emails.find((e) => e.id !== id) || null);
+    }
   };
 
   const [newTo, setNewTo] = useState("");
@@ -184,8 +178,7 @@ export default function EmailClient() {
           }),
         });
         if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.detail || "Failed to send email");
+          throw new Error("Failed to send email");
         }
         setReplyBody("");
         setNewTo("");
@@ -193,8 +186,7 @@ export default function EmailClient() {
         setEmailError("");
         setNewMessageMode(false);
         await fetchEmails();
-      } catch (error) {
-        console.error("Error sending email:", error);
+      } catch {
         alert("Failed to send email");
       } finally {
         setSending(false);
@@ -219,8 +211,7 @@ export default function EmailClient() {
           }),
         });
         if (!response.ok) {
-          const err = await response.json().catch(() => ({}));
-          throw new Error(err.detail || "Failed to send reply");
+          throw new Error("Failed to send reply");
         }
         const newEmail = await response.json();
         setReplyBody("");
@@ -228,8 +219,7 @@ export default function EmailClient() {
         if (newEmail?.id) {
           setSelectedEmail(newEmail);
         }
-      } catch (error) {
-        console.error("Error sending reply:", error);
+      } catch {
         alert("Failed to send reply");
       } finally {
         setSending(false);
