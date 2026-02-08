@@ -63,7 +63,7 @@ export default function EmailClient() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  const fetchEmails = useCallback(async () => {
+  const fetchEmails = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_URL}/emails?tab=${tab}`);
@@ -80,11 +80,11 @@ export default function EmailClient() {
     } finally {
       setLoading(false);
     }
-  }, [tab]);
+  };
 
   useEffect(() => {
     fetchEmails();
-  }, [fetchEmails]);
+  }, [tab]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -139,16 +139,15 @@ export default function EmailClient() {
   const [newSubject, setNewSubject] = useState("");
   const [emailError, setEmailError] = useState("");
 
-  const validateEmail = (email: string): boolean => {
+  const isValidEmail = (email: string) => {
     if (!email.trim()) return false;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setNewTo(value);
-    if (value.trim() && !validateEmail(value)) {
+    const val = e.target.value;
+    setNewTo(val);
+    if (val.trim() && !isValidEmail(val)) {
       setEmailError("Please enter a valid email address");
     } else {
       setEmailError("");
@@ -163,7 +162,7 @@ export default function EmailClient() {
         alert("Please enter recipient and message");
         return;
       }
-      if (!validateEmail(newTo)) {
+      if (!isValidEmail(newTo)) {
         setEmailError("Please enter a valid email address");
         return;
       }
@@ -242,18 +241,16 @@ export default function EmailClient() {
     const date = new Date(dateStr);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    if (diff < 86400000) return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    if (diff < 604800000) return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const day = 86400000;
+    const week = 604800000;
+    if (diff < day) return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    if (diff < week) return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
     return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
   };
 
-  const getInitials = (name: string) =>
-    name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
+  const getInitials = (name: string) => {
+    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+  };
 
   const filteredEmails = searchQuery
     ? emails.filter((e) =>

@@ -116,21 +116,13 @@ def update_email(email_id: int, update: EmailUpdate):
             if r is None:
                 raise HTTPException(status_code=404, detail="Email not found")
 
-            updates = []
-            params = []
             if update.is_read is not None:
-                updates.append("is_read = ?")
-                params.append(1 if update.is_read else 0)
+                cursor.execute("UPDATE emails SET is_read = ? WHERE id = ?", (1 if update.is_read else 0, email_id))
             if update.is_archived is not None:
-                updates.append("is_archived = ?")
-                params.append(1 if update.is_archived else 0)
+                cursor.execute("UPDATE emails SET is_archived = ? WHERE id = ?", (1 if update.is_archived else 0, email_id))
 
-            if updates:
-                params.append(email_id)
-                cursor.execute(f"UPDATE emails SET {', '.join(updates)} WHERE id = ?", params)
-                cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-                r = cursor.fetchone()
-
+            cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
+            r = cursor.fetchone()
             return row_to_email(dict(r))
     except HTTPException:
         raise
@@ -148,7 +140,5 @@ def delete_email(email_id: int):
                 raise HTTPException(status_code=404, detail="Email not found")
             cursor.execute("DELETE FROM emails WHERE id = ?", (email_id,))
             return None
-    except HTTPException:
-        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
