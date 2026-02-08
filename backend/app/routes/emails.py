@@ -23,58 +23,53 @@ class EmailUpdate(BaseModel):
     is_archived: Optional[bool] = None
 
 
-def row_to_email(row) -> dict:
+def row_to_email(r) -> dict:
+    preview = r["preview"] or (r["body"][:100] + "..." if len(r["body"]) > 100 else r["body"])
     return {
-        "id": row["id"],
-        "sender_name": row["sender_name"],
-        "sender_email": row["sender_email"],
-        "recipient_name": row["recipient_name"],
-        "recipient_email": row["recipient_email"],
-        "subject": row["subject"],
-        "body": row["body"],
-        "preview": row["preview"] or (row["body"][:100] + "..." if len(row["body"]) > 100 else row["body"]),
-        "is_read": bool(row["is_read"]),
-        "is_archived": bool(row["is_archived"]),
-        "created_at": row["created_at"],
-        "attachment_name": row["attachment_name"],
-        "attachment_size": row["attachment_size"],
+        "id": r["id"],
+        "sender_name": r["sender_name"],
+        "sender_email": r["sender_email"],
+        "recipient_name": r["recipient_name"],
+        "recipient_email": r["recipient_email"],
+        "subject": r["subject"],
+        "body": r["body"],
+        "preview": preview,
+        "is_read": bool(r["is_read"]),
+        "is_archived": bool(r["is_archived"]),
+        "created_at": r["created_at"],
+        "attachment_name": r["attachment_name"],
+        "attachment_size": r["attachment_size"],
     }
 
 
 @router.get("")
-def list_emails(
-    tab: Optional[str] = Query(None, description="all, unread, or archive"),
-):
-    """Fetch all emails, optionally filtered by unread or archive."""
+def list_emails(tab: Optional[str] = Query(None)):
     try:
         with get_db() as conn:
             cursor = conn.cursor()
             if tab == "unread":
-                cursor.execute(
-                    "SELECT * FROM emails WHERE is_archived = 0 AND is_read = 0 ORDER BY created_at DESC"
-                )
+                cursor.execute("SELECT * FROM emails WHERE is_archived = 0 AND is_read = 0 ORDER BY created_at DESC")
             elif tab == "archive":
                 cursor.execute("SELECT * FROM emails WHERE is_archived = 1 ORDER BY created_at DESC")
             else:
                 cursor.execute("SELECT * FROM emails WHERE is_archived = 0 ORDER BY created_at DESC")
 
             rows = cursor.fetchall()
-            return {"emails": [row_to_email(dict(row)) for row in rows]}
+            return {"emails": [row_to_email(dict(r)) for r in rows]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{email_id}")
 def get_email(email_id: int):
-    """Fetch single email details."""
     try:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            row = cursor.fetchone()
-            if row is None:
+            r = cursor.fetchone()
+            if r is None:
                 raise HTTPException(status_code=404, detail="Email not found")
-            return row_to_email(dict(row))
+            return row_to_email(dict(r))
     except HTTPException:
         raise
     except Exception as e:
@@ -83,7 +78,6 @@ def get_email(email_id: int):
 
 @router.post("", status_code=201)
 def create_email(email: EmailCreate):
-    """Send/create a new email."""
     try:
         preview = email.body[:100] + "..." if len(email.body) > 100 else email.body
         with get_db() as conn:
@@ -106,21 +100,20 @@ def create_email(email: EmailCreate):
             )
             email_id = cursor.lastrowid
             cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            row = cursor.fetchone()
-            return row_to_email(dict(row))
+            r = cursor.fetchone()
+            return row_to_email(dict(r))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/{email_id}")
 def update_email(email_id: int, update: EmailUpdate):
-    """Update email (mark as read, archive, etc.)."""
     try:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-            row = cursor.fetchone()
-            if row is None:
+            r = cursor.fetchone()
+            if r is None:
                 raise HTTPException(status_code=404, detail="Email not found")
 
             updates = []
@@ -134,14 +127,11 @@ def update_email(email_id: int, update: EmailUpdate):
 
             if updates:
                 params.append(email_id)
-                cursor.execute(
-                    f"UPDATE emails SET {', '.join(updates)} WHERE id = ?",
-                    params,
-                )
+                cursor.execute(f"UPDATE emails SET {', '.join(updates)} WHERE id = ?", params)
                 cursor.execute("SELECT * FROM emails WHERE id = ?", (email_id,))
-                row = cursor.fetchone()
+                r = cursor.fetchone()
 
-            return row_to_email(dict(row))
+            return row_to_email(dict(r))
     except HTTPException:
         raise
     except Exception as e:
@@ -150,7 +140,6 @@ def update_email(email_id: int, update: EmailUpdate):
 
 @router.delete("/{email_id}", status_code=204)
 def delete_email(email_id: int):
-    """Delete an email."""
     try:
         with get_db() as conn:
             cursor = conn.cursor()

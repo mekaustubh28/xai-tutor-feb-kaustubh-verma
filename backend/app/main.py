@@ -12,7 +12,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
 app.include_router(health_router)
 app.include_router(items_router)
 app.include_router(emails_router)

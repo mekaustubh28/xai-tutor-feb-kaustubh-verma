@@ -7,15 +7,13 @@ DATABASE_PATH = os.getenv("DATABASE_PATH", "app.db")
 
 
 def get_connection() -> sqlite3.Connection:
-    """Create a new database connection."""
     conn = sqlite3.connect(DATABASE_PATH)
-    conn.row_factory = sqlite3.Row  # Enable dict-like access to rows
+    conn.row_factory = sqlite3.Row
     return conn
 
 
 @contextmanager
 def get_db() -> Generator[sqlite3.Connection, None, None]:
-    """Context manager for database connections."""
     conn = get_connection()
     try:
         yield conn

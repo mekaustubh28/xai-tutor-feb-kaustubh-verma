@@ -2,6 +2,7 @@
 node_modules/
 # Production build
 build/
+.next
 dist/
 # Logs
 npm-debug.log*

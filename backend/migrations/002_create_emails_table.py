@@ -1,8 +1,4 @@
-"""
-Migration: Create emails table
-Version: 002
-Description: Creates the emails table for the email client
-"""
+# Migration 002: emails table
 
 import sqlite3
 import sys
@@ -14,13 +10,12 @@ from app.database import DATABASE_PATH
 
 
 def upgrade():
-    """Apply the migration."""
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
     cursor.execute("SELECT 1 FROM _migrations WHERE name = ?", ("002_create_emails_table",))
     if cursor.fetchone():
-        print("Migration 002_create_emails_table already applied. Skipping.")
+        print("Already applied")
         conn.close()
         return
 
@@ -42,7 +37,6 @@ def upgrade():
         )
     """)
 
-    # Seed demo emails
     demo_emails = [
         (
             "Jane Doe",
@@ -116,11 +110,10 @@ Jane Doe""",
 
     conn.commit()
     conn.close()
-    print("Migration 002_create_emails_table applied successfully.")
+    print("Migration applied")
 
 
 def downgrade():
-    """Revert the migration."""
     conn = sqlite3.connect(DATABASE_PATH)
     cursor = conn.cursor()
 
@@ -129,7 +122,7 @@ def downgrade():
 
     conn.commit()
     conn.close()
-    print("Migration 002_create_emails_table reverted successfully.")
+    print("Migration reverted")
 
 
 if __name__ == "__main__":
