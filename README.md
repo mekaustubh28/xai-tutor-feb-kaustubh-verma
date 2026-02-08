@@ -1,4 +1,8 @@
 # Fullstack Developer Challenge: Email Client Application
+Attaching Screenshots for reference
+<img width="1806" height="840" alt="image" src="https://github.com/user-attachments/assets/397d9d96-a5dc-4f72-8103-c3562968529b" />
+<img width="1828" height="741" alt="image" src="https://github.com/user-attachments/assets/ef1f7f80-3d3e-4ab9-a554-60f3879c1251" />
+<img width="1912" height="983" alt="image" src="https://github.com/user-attachments/assets/18b6d31d-52bd-4315-9f39-733f2a7eb3dd" />
 
 ## Overview
 This is a timed coding exercise to evaluate your ability to build a fullstack application matching the provided design. Your task is to replicate the email client interface shown below.
